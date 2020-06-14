@@ -7,15 +7,15 @@
   <body>
     <div class="ui fixed inverted menu">
       <div class="ui container">
-        <a href="/" class="active item">Detect Sentiment</a>
-        <a href="/detect/dominantlanguage" class="item">Detect DominantLanguage</a>
+        <a href="/" class="item">Detect Sentiment</a>
+        <a href="/detect/dominantlanguage" class="active item">Detect DominantLanguage</a>
         <a href="/detect/entities" class="item">Detect Entities</a>
         <a href="/detect/keyphrases" class="item">Detect KeyPhrases</a>
         <a href="/detect/syntax" class="item">Detect Syntax</a>
       </div>
     </div>
     <h1 class="ui center aligned header">Comprehend</h1>
-    <h2 class="ui center aligned header">Detect Sentiment</h2>
+    <h2 class="ui center aligned header">Detect DominantLanguage</h2>
     <div class="main ui container">
       <form class="ui segment" method="POST">
         <div class="content">
@@ -31,7 +31,7 @@
             </div>
           </div>
         </div>
-        <input id="action" type="hidden" name="action" value="detectsentiment">
+        <input id="action" type="hidden" name="action" value="detectdominantlanguage">
       </form>
     </div>
     <div id="warning" class="ui hidden warning message"></div>

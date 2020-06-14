@@ -27,6 +27,7 @@ type Response events.APIGatewayProxyResponse
 func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (Response, error) {
 	tmp := template.New("tmp")
 	var dat PageData
+	r := request.Resource
 	funcMap := template.FuncMap{
 		"safehtml": func(text string) template.HTML { return template.HTML(text) },
 		"add": func(a, b int) int { return a + b },
@@ -39,9 +40,23 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	jsonString, _ := ioutil.ReadFile("constant/constant.json")
 	constant := new(ConstantData)
 	json.Unmarshal(jsonString, constant)
-	dat.Title = constant.Title
 	dat.Api = constant.Api
-	tmp = template.Must(template.New("").Funcs(funcMap).ParseFiles("templates/index.html", "templates/view.html", "templates/header.html"))
+	if r == "/detect/dominantlanguage" {
+		dat.Title = constant.Title + " | Detect DominantLanguage"
+		tmp = template.Must(template.New("").Funcs(funcMap).ParseFiles("templates/index_dominantlanguage.html", "templates/view.html", "templates/header.html"))
+	} else if r == "/detect/entities" {
+		dat.Title = constant.Title + " | Detect Entities"
+		tmp = template.Must(template.New("").Funcs(funcMap).ParseFiles("templates/index_entities.html", "templates/view.html", "templates/header.html"))
+	} else if r == "/detect/keyphrases" {
+		dat.Title = constant.Title + " | Detect KeyPhrases"
+		tmp = template.Must(template.New("").Funcs(funcMap).ParseFiles("templates/index_keyphrases.html", "templates/view.html", "templates/header.html"))
+	} else if r == "/detect/syntax" {
+		dat.Title = constant.Title + " | Detect Syntax"
+		tmp = template.Must(template.New("").Funcs(funcMap).ParseFiles("templates/index_syntax.html", "templates/view.html", "templates/header.html"))
+	} else {
+		dat.Title = constant.Title + " | Detect Sentiment"
+		tmp = template.Must(template.New("").Funcs(funcMap).ParseFiles("templates/index.html", "templates/view.html", "templates/header.html"))
+	}
 	if e := tmp.ExecuteTemplate(fw, "base", dat); e != nil {
 		log.Fatal(e)
 	} else {
