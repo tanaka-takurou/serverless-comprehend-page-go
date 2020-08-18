@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"fmt"
 	"log"
 	"context"
@@ -92,7 +93,7 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 func detectSentiment(message string)(string, error) {
 	svc := comprehend.New(session.New(), &aws.Config{
-		Region: aws.String("ap-northeast-1"),
+		Region: aws.String(os.Getenv("REGION")),
 	})
 
 	input := &comprehend.DetectSentimentInput{
@@ -108,7 +109,7 @@ func detectSentiment(message string)(string, error) {
 
 func detectDominantLanguage(message string)(string, error) {
 	svc := comprehend.New(session.New(), &aws.Config{
-		Region: aws.String("ap-northeast-1"),
+		Region: aws.String(os.Getenv("REGION")),
 	})
 
 	input := &comprehend.DetectDominantLanguageInput{
@@ -127,7 +128,7 @@ func detectDominantLanguage(message string)(string, error) {
 
 func detectEntities(message string)(string, error) {
 	svc := comprehend.New(session.New(), &aws.Config{
-		Region: aws.String("ap-northeast-1"),
+		Region: aws.String(os.Getenv("REGION")),
 	})
 
 	input := &comprehend.DetectEntitiesInput{
@@ -147,7 +148,7 @@ func detectEntities(message string)(string, error) {
 
 func detectKeyPhrases(message string)(string, error) {
 	svc := comprehend.New(session.New(), &aws.Config{
-		Region: aws.String("ap-northeast-1"),
+		Region: aws.String(os.Getenv("REGION")),
 	})
 
 	input := &comprehend.DetectKeyPhrasesInput{
@@ -167,7 +168,7 @@ func detectKeyPhrases(message string)(string, error) {
 
 func detectSyntax(message string)(string, error) {
 	svc := comprehend.New(session.New(), &aws.Config{
-		Region: aws.String("ap-northeast-1"),
+		Region: aws.String(os.Getenv("REGION")),
 	})
 
 	input := &comprehend.DetectSyntaxInput{
