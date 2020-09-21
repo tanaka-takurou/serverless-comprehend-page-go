@@ -6,11 +6,12 @@ import (
 	"log"
 	"context"
 	"encoding/json"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/comprehend"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/external"
+	"github.com/aws/aws-sdk-go-v2/service/comprehend"
 )
 
 type APIResponse struct {
@@ -18,6 +19,9 @@ type APIResponse struct {
 }
 
 type Response events.APIGatewayProxyResponse
+
+var cfg aws.Config
+var comprehendClient *comprehend.Client
 
 const layout       string = "2006-01-02 15:04"
 const languageCode string = "en"
@@ -31,7 +35,7 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		switch v {
 		case "detectsentiment" :
 			if m, ok := d["message"]; ok {
-				r, e := detectSentiment(m)
+				r, e := detectSentiment(ctx, m)
 				if e != nil {
 					err = e
 				} else {
@@ -40,7 +44,7 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 			}
 		case "detectdominantlanguage" :
 			if m, ok := d["message"]; ok {
-				r, e := detectDominantLanguage(m)
+				r, e := detectDominantLanguage(ctx, m)
 				if e != nil {
 					err = e
 				} else {
@@ -49,7 +53,7 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 			}
 		case "detectentities" :
 			if m, ok := d["message"]; ok {
-				r, e := detectEntities(m)
+				r, e := detectEntities(ctx, m)
 				if e != nil {
 					err = e
 				} else {
@@ -58,7 +62,7 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 			}
 		case "detectkeyphrases" :
 			if m, ok := d["message"]; ok {
-				r, e := detectKeyPhrases(m)
+				r, e := detectKeyPhrases(ctx, m)
 				if e != nil {
 					err = e
 				} else {
@@ -67,7 +71,7 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 			}
 		case "detectsyntax" :
 			if m, ok := d["message"]; ok {
-				r, e := detectSyntax(m)
+				r, e := detectSyntax(ctx, m)
 				if e != nil {
 					err = e
 				} else {
@@ -91,99 +95,113 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	}, nil
 }
 
-func detectSentiment(message string)(string, error) {
-	svc := comprehend.New(session.New(), &aws.Config{
-		Region: aws.String(os.Getenv("REGION")),
-	})
+func detectSentiment(ctx context.Context, message string)(string, error) {
+	if comprehendClient == nil {
+		comprehendClient = comprehend.New(cfg)
+	}
 
 	input := &comprehend.DetectSentimentInput{
-		LanguageCode: aws.String(languageCode),
-		Text:  aws.String(message),
+		LanguageCode: comprehend.LanguageCodeJa,
+		Text: aws.String(message),
 	}
-	res, err := svc.DetectSentiment(input)
+	req := comprehendClient.DetectSentimentRequest(input)
+	res, err := req.Send(ctx)
 	if err != nil {
 		return "", err
 	}
-	return aws.StringValue(res.Sentiment), nil
+	return string(res.DetectSentimentOutput.Sentiment), nil
 }
 
-func detectDominantLanguage(message string)(string, error) {
-	svc := comprehend.New(session.New(), &aws.Config{
-		Region: aws.String(os.Getenv("REGION")),
-	})
+func detectDominantLanguage(ctx context.Context, message string)(string, error) {
+	if comprehendClient == nil {
+		comprehendClient = comprehend.New(cfg)
+	}
 
 	input := &comprehend.DetectDominantLanguageInput{
-		Text:  aws.String(message),
+		Text: aws.String(message),
 	}
-	res, err := svc.DetectDominantLanguage(input)
+	req := comprehendClient.DetectDominantLanguageRequest(input)
+	res, err := req.Send(ctx)
 	if err != nil {
 		return "", err
 	}
-	results, err2 := json.Marshal(res.Languages)
+	results, err2 := json.Marshal(res.DetectDominantLanguageOutput.Languages)
 	if err2 != nil {
 		return "", err2
 	}
 	return string(results), nil
 }
 
-func detectEntities(message string)(string, error) {
-	svc := comprehend.New(session.New(), &aws.Config{
-		Region: aws.String(os.Getenv("REGION")),
-	})
+func detectEntities(ctx context.Context, message string)(string, error) {
+	if comprehendClient == nil {
+		comprehendClient = comprehend.New(cfg)
+	}
 
 	input := &comprehend.DetectEntitiesInput{
-		LanguageCode: aws.String(languageCode),
-		Text:  aws.String(message),
+		LanguageCode: comprehend.LanguageCodeJa,
+		Text: aws.String(message),
 	}
-	res, err := svc.DetectEntities(input)
+	req := comprehendClient.DetectEntitiesRequest(input)
+	res, err := req.Send(ctx)
 	if err != nil {
 		return "", err
 	}
-	results, err2 := json.Marshal(res.Entities)
+	results, err2 := json.Marshal(res.DetectEntitiesOutput.Entities)
 	if err2 != nil {
 		return "", err2
 	}
 	return string(results), nil
 }
 
-func detectKeyPhrases(message string)(string, error) {
-	svc := comprehend.New(session.New(), &aws.Config{
-		Region: aws.String(os.Getenv("REGION")),
-	})
+func detectKeyPhrases(ctx context.Context, message string)(string, error) {
+	if comprehendClient == nil {
+		comprehendClient = comprehend.New(cfg)
+	}
 
 	input := &comprehend.DetectKeyPhrasesInput{
-		LanguageCode: aws.String(languageCode),
-		Text:  aws.String(message),
+		LanguageCode: comprehend.LanguageCodeJa,
+		Text: aws.String(message),
 	}
-	res, err := svc.DetectKeyPhrases(input)
+	req := comprehendClient.DetectKeyPhrasesRequest(input)
+	res, err := req.Send(ctx)
 	if err != nil {
 		return "", err
 	}
-	results, err2 := json.Marshal(res.KeyPhrases)
+	results, err2 := json.Marshal(res.DetectKeyPhrasesOutput.KeyPhrases)
 	if err2 != nil {
 		return "", err2
 	}
 	return string(results), nil
 }
 
-func detectSyntax(message string)(string, error) {
-	svc := comprehend.New(session.New(), &aws.Config{
-		Region: aws.String(os.Getenv("REGION")),
-	})
+func detectSyntax(ctx context.Context, message string)(string, error) {
+	if comprehendClient == nil {
+		comprehendClient = comprehend.New(cfg)
+	}
 
 	input := &comprehend.DetectSyntaxInput{
-		LanguageCode: aws.String(languageCode),
-		Text:  aws.String(message),
+		LanguageCode: comprehend.SyntaxLanguageCodeEn,
+		Text: aws.String(message),
 	}
-	res, err := svc.DetectSyntax(input)
+	req := comprehendClient.DetectSyntaxRequest(input)
+	res, err := req.Send(ctx)
 	if err != nil {
 		return "", err
 	}
-	results, err2 := json.Marshal(res.SyntaxTokens)
+	results, err2 := json.Marshal(res.DetectSyntaxOutput.SyntaxTokens)
 	if err2 != nil {
 		return "", err2
 	}
 	return string(results), nil
+}
+
+func init() {
+	var err error
+	cfg, err = external.LoadDefaultAWSConfig()
+	cfg.Region = os.Getenv("REGION")
+	if err != nil {
+		log.Print(err)
+	}
 }
 
 func main() {
