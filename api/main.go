@@ -10,8 +10,9 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/external"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/comprehend"
+	"github.com/aws/aws-sdk-go-v2/service/comprehend/types"
 )
 
 type APIResponse struct {
@@ -20,7 +21,6 @@ type APIResponse struct {
 
 type Response events.APIGatewayProxyResponse
 
-var cfg aws.Config
 var comprehendClient *comprehend.Client
 
 const layout       string = "2006-01-02 15:04"
@@ -97,35 +97,33 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 func detectSentiment(ctx context.Context, message string)(string, error) {
 	if comprehendClient == nil {
-		comprehendClient = comprehend.New(cfg)
+		comprehendClient = getComprehendClient()
 	}
 
 	input := &comprehend.DetectSentimentInput{
-		LanguageCode: comprehend.LanguageCodeJa,
+		LanguageCode: types.LanguageCodeJa,
 		Text: aws.String(message),
 	}
-	req := comprehendClient.DetectSentimentRequest(input)
-	res, err := req.Send(ctx)
+	res, err := comprehendClient.DetectSentiment(ctx, input)
 	if err != nil {
 		return "", err
 	}
-	return string(res.DetectSentimentOutput.Sentiment), nil
+	return string(res.Sentiment), nil
 }
 
 func detectDominantLanguage(ctx context.Context, message string)(string, error) {
 	if comprehendClient == nil {
-		comprehendClient = comprehend.New(cfg)
+		comprehendClient = getComprehendClient()
 	}
 
 	input := &comprehend.DetectDominantLanguageInput{
 		Text: aws.String(message),
 	}
-	req := comprehendClient.DetectDominantLanguageRequest(input)
-	res, err := req.Send(ctx)
+	res, err := comprehendClient.DetectDominantLanguage(ctx, input)
 	if err != nil {
 		return "", err
 	}
-	results, err2 := json.Marshal(res.DetectDominantLanguageOutput.Languages)
+	results, err2 := json.Marshal(res.Languages)
 	if err2 != nil {
 		return "", err2
 	}
@@ -134,19 +132,18 @@ func detectDominantLanguage(ctx context.Context, message string)(string, error) 
 
 func detectEntities(ctx context.Context, message string)(string, error) {
 	if comprehendClient == nil {
-		comprehendClient = comprehend.New(cfg)
+		comprehendClient = getComprehendClient()
 	}
 
 	input := &comprehend.DetectEntitiesInput{
-		LanguageCode: comprehend.LanguageCodeJa,
+		LanguageCode: types.LanguageCodeJa,
 		Text: aws.String(message),
 	}
-	req := comprehendClient.DetectEntitiesRequest(input)
-	res, err := req.Send(ctx)
+	res, err := comprehendClient.DetectEntities(ctx, input)
 	if err != nil {
 		return "", err
 	}
-	results, err2 := json.Marshal(res.DetectEntitiesOutput.Entities)
+	results, err2 := json.Marshal(res.Entities)
 	if err2 != nil {
 		return "", err2
 	}
@@ -155,19 +152,18 @@ func detectEntities(ctx context.Context, message string)(string, error) {
 
 func detectKeyPhrases(ctx context.Context, message string)(string, error) {
 	if comprehendClient == nil {
-		comprehendClient = comprehend.New(cfg)
+		comprehendClient = getComprehendClient()
 	}
 
 	input := &comprehend.DetectKeyPhrasesInput{
-		LanguageCode: comprehend.LanguageCodeJa,
+		LanguageCode: types.LanguageCodeJa,
 		Text: aws.String(message),
 	}
-	req := comprehendClient.DetectKeyPhrasesRequest(input)
-	res, err := req.Send(ctx)
+	res, err := comprehendClient.DetectKeyPhrases(ctx, input)
 	if err != nil {
 		return "", err
 	}
-	results, err2 := json.Marshal(res.DetectKeyPhrasesOutput.KeyPhrases)
+	results, err2 := json.Marshal(res.KeyPhrases)
 	if err2 != nil {
 		return "", err2
 	}
@@ -176,32 +172,31 @@ func detectKeyPhrases(ctx context.Context, message string)(string, error) {
 
 func detectSyntax(ctx context.Context, message string)(string, error) {
 	if comprehendClient == nil {
-		comprehendClient = comprehend.New(cfg)
+		comprehendClient = getComprehendClient()
 	}
 
 	input := &comprehend.DetectSyntaxInput{
-		LanguageCode: comprehend.SyntaxLanguageCodeEn,
+		LanguageCode: types.SyntaxLanguageCodeEn,
 		Text: aws.String(message),
 	}
-	req := comprehendClient.DetectSyntaxRequest(input)
-	res, err := req.Send(ctx)
+	res, err := comprehendClient.DetectSyntax(ctx, input)
 	if err != nil {
 		return "", err
 	}
-	results, err2 := json.Marshal(res.DetectSyntaxOutput.SyntaxTokens)
+	results, err2 := json.Marshal(res.SyntaxTokens)
 	if err2 != nil {
 		return "", err2
 	}
 	return string(results), nil
 }
 
-func init() {
-	var err error
-	cfg, err = external.LoadDefaultAWSConfig()
-	cfg.Region = os.Getenv("REGION")
+func getComprehendClient() *comprehend.Client {
+	cfg, err := config.LoadDefaultConfig()
 	if err != nil {
 		log.Print(err)
 	}
+	cfg.Region = os.Getenv("REGION")
+	return comprehend.NewFromConfig(cfg)
 }
 
 func main() {
