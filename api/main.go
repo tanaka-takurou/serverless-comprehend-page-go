@@ -97,7 +97,7 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 func detectSentiment(ctx context.Context, message string)(string, error) {
 	if comprehendClient == nil {
-		comprehendClient = getComprehendClient()
+		comprehendClient = getComprehendClient(ctx)
 	}
 
 	input := &comprehend.DetectSentimentInput{
@@ -113,7 +113,7 @@ func detectSentiment(ctx context.Context, message string)(string, error) {
 
 func detectDominantLanguage(ctx context.Context, message string)(string, error) {
 	if comprehendClient == nil {
-		comprehendClient = getComprehendClient()
+		comprehendClient = getComprehendClient(ctx)
 	}
 
 	input := &comprehend.DetectDominantLanguageInput{
@@ -132,7 +132,7 @@ func detectDominantLanguage(ctx context.Context, message string)(string, error) 
 
 func detectEntities(ctx context.Context, message string)(string, error) {
 	if comprehendClient == nil {
-		comprehendClient = getComprehendClient()
+		comprehendClient = getComprehendClient(ctx)
 	}
 
 	input := &comprehend.DetectEntitiesInput{
@@ -152,7 +152,7 @@ func detectEntities(ctx context.Context, message string)(string, error) {
 
 func detectKeyPhrases(ctx context.Context, message string)(string, error) {
 	if comprehendClient == nil {
-		comprehendClient = getComprehendClient()
+		comprehendClient = getComprehendClient(ctx)
 	}
 
 	input := &comprehend.DetectKeyPhrasesInput{
@@ -172,7 +172,7 @@ func detectKeyPhrases(ctx context.Context, message string)(string, error) {
 
 func detectSyntax(ctx context.Context, message string)(string, error) {
 	if comprehendClient == nil {
-		comprehendClient = getComprehendClient()
+		comprehendClient = getComprehendClient(ctx)
 	}
 
 	input := &comprehend.DetectSyntaxInput{
@@ -190,8 +190,8 @@ func detectSyntax(ctx context.Context, message string)(string, error) {
 	return string(results), nil
 }
 
-func getComprehendClient() *comprehend.Client {
-	cfg, err := config.LoadDefaultConfig()
+func getComprehendClient(ctx context.Context) *comprehend.Client {
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		log.Print(err)
 	}
